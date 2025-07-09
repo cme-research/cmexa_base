@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UNICO_BASE__DIFFBOT_SYSTEM_HPP_
-#define UNICO_BASE__DIFFBOT_SYSTEM_HPP_
+#ifndef CMEXA_BASE__MECANUMBOT_SYSTEM_HPP_
+#define CMEXA_BASE__MECANUMBOT_SYSTEM_HPP_
 
 #include <memory>
 #include <string>
@@ -34,13 +34,13 @@
 #include "unico_msgs/msg/unico_stepper_feedback.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace unico_base
+namespace cmexa_base
 {
-class UnicoDiffBotSystemHardware : public hardware_interface::SystemInterface
+class CmexaMecanumBotSystemHardware : public hardware_interface::SystemInterface
 {
 public:
-  UnicoDiffBotSystemHardware();
-  RCLCPP_SHARED_PTR_DEFINITIONS(UnicoDiffBotSystemHardware)
+  CmexaMecanumBotSystemHardware();
+  RCLCPP_SHARED_PTR_DEFINITIONS(CmexaMecanumBotSystemHardware)
 
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareInfo & info) override;
@@ -97,6 +97,6 @@ private:
 
 };
 
-}  // namespace unico_base
+}  // namespace cmexa_base
 
-#endif  // UNICO_BASE__DIFFBOT_SYSTEM_HPP_
+#endif  // CMEXA_BASE__MECANUM_SYSTEM_HPP_

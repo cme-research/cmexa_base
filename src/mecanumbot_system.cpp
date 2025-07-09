@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "unico_base/diffbot_system.hpp"
+#include "cmexa_base/mecanumbot_system.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -27,44 +27,44 @@
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace unico_base
+namespace cmexa_base
 {
 
-UnicoDiffBotSystemHardware::UnicoDiffBotSystemHardware()
+CmexaMecanumBotSystemHardware::CmexaMecanumBotSystemHardware()
 {
-  node_ = std::make_shared<rclcpp::Node>("unicomini_base");
+  node_ = std::make_shared<rclcpp::Node>("cmexa_base");
   command_front_left_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/front_left/cmd_vel", 10);
   command_front_right_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/front_right/cmd_vel", 10);
   command_rear_left_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/rear_left/cmd_vel", 10);
   command_rear_right_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/rear_right/cmd_vel", 10);
 
-  feedback_front_left_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/front_left/feedback", 10, std::bind(&UnicoDiffBotSystemHardware::feedbackFrontLeftCallback, this, std::placeholders::_1));
-  feedback_front_right_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/front_right/feedback", 10, std::bind(&UnicoDiffBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
-  feedback_rear_left_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/rear_left/feedback", 10, std::bind(&UnicoDiffBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
-  feedback_rear_right_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/rear_right/feedback", 10, std::bind(&UnicoDiffBotSystemHardware::feedbackRearRightCallback, this, std::placeholders::_1));
+  feedback_front_left_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/front_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback, this, std::placeholders::_1));
+  feedback_front_right_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/front_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
+  feedback_rear_left_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/rear_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
+  feedback_rear_right_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/rear_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearRightCallback, this, std::placeholders::_1));
 }
 
-void UnicoDiffBotSystemHardware::feedbackFrontLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
 {
     RCLCPP_INFO(node_->get_logger(), "FeedbackFrontLeftCallback received: %f", msg->current_velocity);
 }
 
-void UnicoDiffBotSystemHardware::feedbackFrontRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackFrontRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
 {
   RCLCPP_INFO(node_->get_logger(), "FeedbackFrontRightCallback received: %f", msg->current_velocity);
 }
 
-void UnicoDiffBotSystemHardware::feedbackRearLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackRearLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
 {
   RCLCPP_INFO(node_->get_logger(), "FeedbackRearLeftCallback received: %f", msg->current_velocity);
 }
 
-void UnicoDiffBotSystemHardware::feedbackRearRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackRearRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
 {
    RCLCPP_INFO(node_->get_logger(), "FeedbackRearRightCallback received: %f", msg->current_velocity);
 }
 
-hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_init(
+hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_init(
   const hardware_interface::HardwareInfo & info)
 {
   if (
@@ -131,7 +131,7 @@ hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_init(
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_configure(
+hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
@@ -158,7 +158,7 @@ hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_configure(
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_activate(
+hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
@@ -182,7 +182,7 @@ hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_activate(
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_deactivate(
+hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
@@ -200,7 +200,7 @@ hardware_interface::CallbackReturn UnicoDiffBotSystemHardware::on_deactivate(
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type UnicoDiffBotSystemHardware::read(
+hardware_interface::return_type CmexaMecanumBotSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
     // Read state from hardware
@@ -231,7 +231,7 @@ hardware_interface::return_type UnicoDiffBotSystemHardware::read(
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type unico_base ::UnicoDiffBotSystemHardware::write(
+hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
 
@@ -274,8 +274,8 @@ hardware_interface::return_type unico_base ::UnicoDiffBotSystemHardware::write(
   return hardware_interface::return_type::OK;
 }
 
-}  // namespace unico_base
+}  // namespace cmexa_base
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(
-  unico_base::UnicoDiffBotSystemHardware, hardware_interface::SystemInterface)
+  cmexa_base::CmexaMecanumBotSystemHardware, hardware_interface::SystemInterface)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(unico_base LANGUAGES CXX)
+project(cmexa_base LANGUAGES CXX)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES  "(GNU|Clang)")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -42,31 +42,31 @@ find_package(unico_msgs)
 
 ## COMPILE
 add_library(
-        unico_base
+        cmexa_base
         SHARED
-        src/diffbot_system.cpp
+        src/mecanumbot_system.cpp
 )
-target_compile_features(unico_base PUBLIC cxx_std_17)
-target_include_directories(unico_base PUBLIC
+target_compile_features(cmexa_base PUBLIC cxx_std_17)
+target_include_directories(cmexa_base PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/unico_base>
+        $<INSTALL_INTERFACE:include/cmexa_base>
 )
 
 ament_target_dependencies(
-        unico_base PUBLIC
+        cmexa_base PUBLIC
         ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 # Export hardware plugins
-pluginlib_export_plugin_description_file(hardware_interface ros2_control_unico_diffbot.xml)
+pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_mecanumbot.xml)
 
 
 install(
         DIRECTORY include/
-        DESTINATION include/unico_base
+        DESTINATION include/cmexa_base
 )
 
-install(TARGETS unico_base
-        EXPORT export_unico_base
+install(TARGETS cmexa_base
+        EXPORT export_cmexa_base
         ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
@@ -84,6 +84,6 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_export_targets(export_unico_base HAS_LIBRARY_TARGET)
+ament_export_targets(export_cmexa_base HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_package()
