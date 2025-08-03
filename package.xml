@@ -3,8 +3,8 @@
 <package format="3">
   <name>cmexa_base</name>
   <version>0.1.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="c.ehrmann@cme-robotics.com">Christian Ehrmann</maintainer>
+  <description>Hardware interface controller for cmexa base. Basically sending controller commands to stepper topics.</description>
+  <maintainer email="info@cme-robotics.com">Christian Ehrmann</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -21,7 +21,7 @@
   <depend>mecanum_drive_controller</depend>
   <depend>joint_state_broadcaster</depend>
 
-  <depend>unico_msgs</depend>
+  <depend>cmeresearch_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

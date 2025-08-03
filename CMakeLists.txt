@@ -38,7 +38,7 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-find_package(unico_msgs)
+find_package(cmeresearch_msgs)
 
 ## COMPILE
 add_library(

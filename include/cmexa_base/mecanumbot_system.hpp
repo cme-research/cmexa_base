@@ -69,31 +69,31 @@ private:
   rclcpp::Node::SharedPtr node_;
 
   // send commands to the hardware
-  rclcpp::Publisher<unico_msgs::msg::UnicoStepperCommand>::SharedPtr command_front_left_pub_;
-  rclcpp::Publisher<unico_msgs::msg::UnicoStepperCommand>::SharedPtr command_front_right_pub_;
-  rclcpp::Publisher<unico_msgs::msg::UnicoStepperCommand>::SharedPtr command_rear_left_pub_;
-  rclcpp::Publisher<unico_msgs::msg::UnicoStepperCommand>::SharedPtr command_rear_right_pub_;
+  rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_front_left_pub_;
+  rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_front_right_pub_;
+  rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_rear_left_pub_;
+  rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_rear_right_pub_;
 
-  unico_msgs::msg::UnicoStepperCommand cmd_message_front_left_;
-  unico_msgs::msg::UnicoStepperCommand cmd_message_rear_left_;
-  unico_msgs::msg::UnicoStepperCommand cmd_message_front_right_;
-  unico_msgs::msg::UnicoStepperCommand cmd_message_rear_right_;
+  cmeresearch_msgs::msg::TinkerStepperCommand cmd_message_front_left_;
+  cmeresearch_msgs::msg::TinkerStepperCommand cmd_message_rear_left_;
+  cmeresearch_msgs::msg::TinkerStepperCommand cmd_message_front_right_;
+  cmeresearch_msgs::msg::TinkerStepperCommand cmd_message_rear_right_;
 
-  rclcpp::Subscription<unico_msgs::msg::UnicoStepperFeedback>::SharedPtr feedback_front_left_sub_;
-  rclcpp::Subscription<unico_msgs::msg::UnicoStepperFeedback>::SharedPtr feedback_front_right_sub_;
-  rclcpp::Subscription<unico_msgs::msg::UnicoStepperFeedback>::SharedPtr feedback_rear_left_sub_;
-  rclcpp::Subscription<unico_msgs::msg::UnicoStepperFeedback>::SharedPtr feedback_rear_right_sub_;
+  rclcpp::Subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>::SharedPtr feedback_front_left_sub_;
+  rclcpp::Subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>::SharedPtr feedback_front_right_sub_;
+  rclcpp::Subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>::SharedPtr feedback_rear_left_sub_;
+  rclcpp::Subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>::SharedPtr feedback_rear_right_sub_;
 
-	//TODO: std::shared_ptr<unico_msgs::msg::UnicoStepperFeedback> feedback_front_left_msg_;
-  unico_msgs::msg::UnicoStepperFeedback feedback_front_left_msg_;
-  unico_msgs::msg::UnicoStepperFeedback feedback_front_right_msg_;
-  unico_msgs::msg::UnicoStepperFeedback feedback_rear_left_msg_;
-  unico_msgs::msg::UnicoStepperFeedback feedback_rear_right_msg_;
+	//TODO: std::shared_ptr<unico_msgs::msg::TinkerStepperFeedback> feedback_front_left_msg_;
+  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_front_left_msg_;
+  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_front_right_msg_;
+  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_rear_left_msg_;
+  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_rear_right_msg_;
 
-  void feedbackFrontLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg);
-  void feedbackFrontRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg);
-  void feedbackRearLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg);
-  void feedbackRearRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg);
+  void feedbackFrontLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg);
+  void feedbackFrontRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg);
+  void feedbackRearLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg);
+  void feedbackRearRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg);
 
 };
 

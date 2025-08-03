@@ -33,33 +33,33 @@ namespace cmexa_base
 CmexaMecanumBotSystemHardware::CmexaMecanumBotSystemHardware()
 {
   node_ = std::make_shared<rclcpp::Node>("cmexa_base");
-  command_front_left_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/front_left/cmd_vel", 10);
-  command_front_right_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/front_right/cmd_vel", 10);
-  command_rear_left_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/rear_left/cmd_vel", 10);
-  command_rear_right_pub_ = node_->create_publisher<unico_msgs::msg::UnicoStepperCommand>("~/rear_right/cmd_vel", 10);
+  command_front_left_pub_ = node_->create_publisher<unico_msgs::msg::TinkerStepperCommand>("~/front_left/cmd_vel", 10);
+  command_front_right_pub_ = node_->create_publisher<unico_msgs::msg::TinkerStepperCommand>("~/front_right/cmd_vel", 10);
+  command_rear_left_pub_ = node_->create_publisher<unico_msgs::msg::TinkerStepperCommand>("~/rear_left/cmd_vel", 10);
+  command_rear_right_pub_ = node_->create_publisher<unico_msgs::msg::TinkerStepperCommand>("~/rear_right/cmd_vel", 10);
 
-  feedback_front_left_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/front_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback, this, std::placeholders::_1));
-  feedback_front_right_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/front_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
-  feedback_rear_left_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/rear_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
-  feedback_rear_right_sub_ = node_->create_subscription<unico_msgs::msg::UnicoStepperFeedback>("~/rear_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearRightCallback, this, std::placeholders::_1));
+  feedback_front_left_sub_ = node_->create_subscription<unico_msgs::msg::TinkerStepperFeedback>("~/front_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback, this, std::placeholders::_1));
+  feedback_front_right_sub_ = node_->create_subscription<unico_msgs::msg::TinkerStepperFeedback>("~/front_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
+  feedback_rear_left_sub_ = node_->create_subscription<unico_msgs::msg::TinkerStepperFeedback>("~/rear_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
+  feedback_rear_right_sub_ = node_->create_subscription<unico_msgs::msg::TinkerStepperFeedback>("~/rear_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearRightCallback, this, std::placeholders::_1));
 }
 
-void CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback(const unico_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
     RCLCPP_INFO(node_->get_logger(), "FeedbackFrontLeftCallback received: %f", msg->current_velocity);
 }
 
-void CmexaMecanumBotSystemHardware::feedbackFrontRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackFrontRightCallback(const unico_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
   RCLCPP_INFO(node_->get_logger(), "FeedbackFrontRightCallback received: %f", msg->current_velocity);
 }
 
-void CmexaMecanumBotSystemHardware::feedbackRearLeftCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackRearLeftCallback(const unico_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
   RCLCPP_INFO(node_->get_logger(), "FeedbackRearLeftCallback received: %f", msg->current_velocity);
 }
 
-void CmexaMecanumBotSystemHardware::feedbackRearRightCallback(const unico_msgs::msg::UnicoStepperFeedback::SharedPtr msg)
+void CmexaMecanumBotSystemHardware::feedbackRearRightCallback(const unico_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
    RCLCPP_INFO(node_->get_logger(), "FeedbackRearRightCallback received: %f", msg->current_velocity);
 }
