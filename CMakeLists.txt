@@ -52,10 +52,19 @@ target_include_directories(cmexa_base PUBLIC
         $<INSTALL_INTERFACE:include/cmexa_base>
 )
 
-ament_target_dependencies(
-        cmexa_base PUBLIC
-        ${THIS_PACKAGE_INCLUDE_DEPENDS}
+#ament_target_dependencies(
+#        cmexa_base PUBLIC
+#        ${THIS_PACKAGE_INCLUDE_DEPENDS}
+#)
+
+target_link_libraries(cmexa_base PUBLIC ${cmeresearch_msgs_TARGETS}
+        hardware_interface::hardware_interface
+        hardware_interface::mock_components
+        pluginlib::pluginlib
+        rclcpp::rclcpp
+        rclcpp_lifecycle::rclcpp_lifecycle
 )
+
 # Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_mecanumbot.xml)
 

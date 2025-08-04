@@ -30,8 +30,8 @@
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 
-#include "unico_msgs/msg/unico_stepper_command.hpp"
-#include "unico_msgs/msg/unico_stepper_feedback.hpp"
+#include "cmeresearch_msgs/msg/tinker_stepper_command.hpp"
+#include "cmeresearch_msgs/msg/tinker_stepper_feedback.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace cmexa_base
