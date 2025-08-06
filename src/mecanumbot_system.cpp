@@ -244,23 +244,33 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
   {
     // Simulate sending commands to the hardware
     set_state(name, get_command(name));
-    if (name == "left_wheel_joint/velocity")
+    if (name == "front_left_wheel_joint/velocity")
     {
       cmd_message_front_left_.header.stamp = node_->get_clock()->now();
-      cmd_message_front_left_.header.frame_id = "left_wheel_joint";
+      cmd_message_front_left_.header.frame_id = "front_left_wheel_joint";
       cmd_message_front_left_.velocity = double(get_command(name));
-      cmd_message_rear_left_.velocity = double(get_command(name));
       command_front_left_pub_->publish(cmd_message_front_left_);
-      command_rear_left_pub_->publish(cmd_message_rear_left_);
     }
-    else if (name == "right_wheel_joint/velocity")
+    else if (name == "rear_right_wheel_joint/velocity")
+    {
+      cmd_message_rear_right_.header.stamp = node_->get_clock()->now();
+      cmd_message_rear_right_.header.frame_id = "rear_right_wheel_joint";
+      cmd_message_rear_right_.velocity = double(get_command(name));
+      command_rear_right_pub_->publish(cmd_message_rear_right_);
+    }
+    else if (name == "front_right_wheel_joint/velocity")
     {
       cmd_message_front_right_.header.stamp = node_->get_clock()->now();
-      cmd_message_front_right_.header.frame_id = "right_wheel_joint";
+      cmd_message_front_right_.header.frame_id = "front_right_wheel_joint";
       cmd_message_front_right_.velocity = double(get_command(name));
-      cmd_message_rear_right_.velocity = double(get_command(name));
       command_front_right_pub_->publish(cmd_message_front_right_);
-      command_rear_right_pub_->publish(cmd_message_rear_right_);
+    }
+    else if (name == "rear_left_wheel_joint/velocity")
+    {
+      cmd_message_rear_left_.header.stamp = node_->get_clock()->now();
+      cmd_message_rear_left_.header.frame_id = "rear_left_wheel_joint";
+      cmd_message_rear_left_.velocity = double(get_command(name));
+      command_rear_left_pub_->publish(cmd_message_rear_left_);
     }
 
 
