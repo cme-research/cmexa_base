@@ -46,22 +46,22 @@ CmexaMecanumBotSystemHardware::CmexaMecanumBotSystemHardware()
 
 void CmexaMecanumBotSystemHardware::feedbackFrontLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-    RCLCPP_INFO(node_->get_logger(), "FeedbackFrontLeftCallback received: %f", msg->current_velocity);
+    //RCLCPP_INFO(node_->get_logger(), "FeedbackFrontLeftCallback received: %f", msg->current_velocity);
 }
 
 void CmexaMecanumBotSystemHardware::feedbackFrontRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  RCLCPP_INFO(node_->get_logger(), "FeedbackFrontRightCallback received: %f", msg->current_velocity);
+  //RCLCPP_INFO(node_->get_logger(), "FeedbackFrontRightCallback received: %f", msg->current_velocity);
 }
 
 void CmexaMecanumBotSystemHardware::feedbackRearLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  RCLCPP_INFO(node_->get_logger(), "FeedbackRearLeftCallback received: %f", msg->current_velocity);
+  //RCLCPP_INFO(node_->get_logger(), "FeedbackRearLeftCallback received: %f", msg->current_velocity);
 }
 
 void CmexaMecanumBotSystemHardware::feedbackRearRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-   RCLCPP_INFO(node_->get_logger(), "FeedbackRearRightCallback received: %f", msg->current_velocity);
+   //RCLCPP_INFO(node_->get_logger(), "FeedbackRearRightCallback received: %f", msg->current_velocity);
 }
 
 hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_init(
@@ -225,7 +225,7 @@ hardware_interface::return_type CmexaMecanumBotSystemHardware::read(
          << "'!";
     }
   }
-  RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500, "%s", ss.str().c_str());
+  //RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500, "%s", ss.str().c_str());
   // END: This part here is for exemplary purposes - Please do not copy to your production code
 
   return hardware_interface::return_type::OK;
@@ -278,7 +278,7 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
     ss << std::fixed << std::setprecision(2) << std::endl
        << "\t" << "command " << get_command(name) << " for '" << name << "'!";
   }
-  RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500, "%s", ss.str().c_str());
+  //RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500, "%s", ss.str().c_str());
   // END: This part here is for exemplary purposes - Please do not copy to your production code
 
   return hardware_interface::return_type::OK;
