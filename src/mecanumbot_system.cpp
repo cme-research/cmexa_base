@@ -81,6 +81,9 @@ hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_init(
     hardware_interface::stod(info_.hardware_parameters["example_param_hw_stop_duration_sec"]);
   // END: This part here is for exemplary purposes - Please do not copy to your production code
 
+  wheel_radius_ = std::stod(info_.hardware_parameters["wheel_radius"]);
+
+
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
   {
     // DiffBotSystem has exactly two states and one command interface on each joint
