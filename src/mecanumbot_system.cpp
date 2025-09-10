@@ -256,7 +256,7 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
       // calculate velocity from m/s to rad/s
       double radius = 0.05; //radius of the wheel in meters
       double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_front_left_.velocity = velocity_in_rads;
+      cmd_message_front_left_.velocity = double(get_command(name));
       command_front_left_pub_->publish(cmd_message_front_left_);
     }
     else if (name == "rear_right_wheel_joint/velocity")
@@ -267,7 +267,7 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
       // calculate velocity from m/s to rad/s
       double radius = 0.05; //radius of the wheel in meters
       double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_rear_right_.velocity = velocity_in_rads;
+      cmd_message_rear_right_.velocity = double(get_command(name));
       command_rear_right_pub_->publish(cmd_message_rear_right_);
     }
     else if (name == "front_right_wheel_joint/velocity")
@@ -278,7 +278,7 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
       // calculate velocity from m/s to rad/s
       double radius = 0.05; //radius of the wheel in meters
       double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_front_right_.velocity = velocity_in_rads;
+      cmd_message_front_right_.velocity = double(get_command(name));
       command_front_right_pub_->publish(cmd_message_front_right_);
     }
     else if (name == "rear_left_wheel_joint/velocity")
@@ -289,7 +289,7 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
       // calculate velocity from m/s to rad/s
       double radius = 0.05; //radius of the wheel in meters
       double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_rear_left_.velocity = velocity_in_rads;
+      cmd_message_rear_left_.velocity = double(get_command(name));
       command_rear_left_pub_->publish(cmd_message_rear_left_);
     }
 
