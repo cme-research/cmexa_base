@@ -66,8 +66,8 @@ private:
   double hw_start_sec_;
   double hw_stop_sec_;
 
-  // Parameters for the Mecaum bot calculation
-  double wheel_radius_;
+  // Parameters for the Mecanum bot calculation
+  double gear_ratio_;
 
   rclcpp::Node::SharedPtr node_;
 
@@ -102,4 +102,4 @@ private:
 
 }  // namespace cmexa_base
 
-#endif  // CMEXA_BASE__MECANUM_SYSTEM_HPP_
+#endif // CMEXA_BASE__MECANUMBOT_SYSTEM_HPP_

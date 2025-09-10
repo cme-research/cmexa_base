@@ -81,8 +81,7 @@ hardware_interface::CallbackReturn CmexaMecanumBotSystemHardware::on_init(
     hardware_interface::stod(info_.hardware_parameters["example_param_hw_stop_duration_sec"]);
   // END: This part here is for exemplary purposes - Please do not copy to your production code
 
-  wheel_radius_ =
-    hardware_interface::stod(info_.hardware_parameters["wheel_radius"]);
+  gear_ratio_ = hardware_interface::stod(info_.hardware_parameters["gear_ratio"]);
 
 
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
@@ -252,44 +251,32 @@ hardware_interface::return_type cmexa_base ::CmexaMecanumBotSystemHardware::writ
     {
       cmd_message_front_left_.header.stamp = node_->get_clock()->now();
       cmd_message_front_left_.header.frame_id = "front_left_wheel_joint";
-      double velocity_in_ms = double(get_command(name));
-      // calculate velocity from m/s to rad/s
-      double radius = 0.05; //radius of the wheel in meters
-      double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_front_left_.velocity = double(get_command(name));
+
+      cmd_message_front_left_.velocity = double(get_command(name)) * gear_ratio_;
       command_front_left_pub_->publish(cmd_message_front_left_);
     }
     else if (name == "rear_right_wheel_joint/velocity")
     {
       cmd_message_rear_right_.header.stamp = node_->get_clock()->now();
       cmd_message_rear_right_.header.frame_id = "rear_right_wheel_joint";
-      double velocity_in_ms = double(get_command(name));
-      // calculate velocity from m/s to rad/s
-      double radius = 0.05; //radius of the wheel in meters
-      double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_rear_right_.velocity = double(get_command(name));
+
+      cmd_message_rear_right_.velocity = double(get_command(name)) * gear_ratio_;
       command_rear_right_pub_->publish(cmd_message_rear_right_);
     }
     else if (name == "front_right_wheel_joint/velocity")
     {
       cmd_message_front_right_.header.stamp = node_->get_clock()->now();
       cmd_message_front_right_.header.frame_id = "front_right_wheel_joint";
-      double velocity_in_ms = double(get_command(name));
-      // calculate velocity from m/s to rad/s
-      double radius = 0.05; //radius of the wheel in meters
-      double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_front_right_.velocity = double(get_command(name));
+
+      cmd_message_front_right_.velocity = double(get_command(name)) * gear_ratio_;
       command_front_right_pub_->publish(cmd_message_front_right_);
     }
     else if (name == "rear_left_wheel_joint/velocity")
     {
       cmd_message_rear_left_.header.stamp = node_->get_clock()->now();
       cmd_message_rear_left_.header.frame_id = "rear_left_wheel_joint";
-      double velocity_in_ms = double(get_command(name));
-      // calculate velocity from m/s to rad/s
-      double radius = 0.05; //radius of the wheel in meters
-      double velocity_in_rads = velocity_in_ms / radius;
-      cmd_message_rear_left_.velocity = double(get_command(name));
+
+      cmd_message_rear_left_.velocity = double(get_command(name)) * gear_ratio_;
       command_rear_left_pub_->publish(cmd_message_rear_left_);
     }
 
