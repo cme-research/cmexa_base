@@ -36,8 +36,8 @@ CmexaDiffBotSystemHardware::CmexaDiffBotSystemHardware()
   command_front_right_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>("~/front_right/cmd_vel", 10);
   command_rear_left_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>("~/rear_left/cmd_vel", 10);
 
-  feedback_front_right_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/front_right/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
-  feedback_rear_left_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/rear_left/feedback", 10, std::bind(&CmexaMecanumBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
+  feedback_front_right_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/front_right/feedback", 10, std::bind(&CmexaDiffBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
+  feedback_rear_left_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/rear_left/feedback", 10, std::bind(&CmexaDiffBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
 }
 
 void CmexaDiffBotSystemHardware::feedbackFrontRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)

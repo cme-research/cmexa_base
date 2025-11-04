@@ -66,7 +66,7 @@ private:
   double hw_start_sec_;
   double hw_stop_sec_;
 
-  // Parameters for the Mecanum bot calculation
+  // Parameters for the Diff bot calculation
   double gear_ratio_;
 
   rclcpp::Node::SharedPtr node_;
