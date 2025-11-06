@@ -67,8 +67,8 @@ target_link_libraries(cmexa_base PUBLIC ${cmeresearch_msgs_TARGETS}
 )
 
 # Export hardware plugins
-pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_mecanumbot.xml)
-pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_diffbot.xml)
+pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa.xml)
+#pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_diffbot.xml)
 
 
 install(
