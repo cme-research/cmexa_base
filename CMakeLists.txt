@@ -46,6 +46,7 @@ add_library(
         SHARED
         src/mecanumbot_system.cpp
         src/diffbot_system.cpp
+        src/cmex_base_system.cpp
 )
 target_compile_features(cmexa_base PUBLIC cxx_std_17)
 target_include_directories(cmexa_base PUBLIC
