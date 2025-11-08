@@ -44,7 +44,9 @@ find_package(cmeresearch_msgs)
 add_library(
         cmexa_base
         SHARED
-        src/mecanumbot_system.cpp
+        #src/mecanumbot_system.cpp
+        #src/diffbot_system.cpp
+        src/cmexa_base_system.cpp
 )
 target_compile_features(cmexa_base PUBLIC cxx_std_17)
 target_include_directories(cmexa_base PUBLIC
@@ -66,8 +68,9 @@ target_link_libraries(cmexa_base PUBLIC ${cmeresearch_msgs_TARGETS}
 )
 
 # Export hardware plugins
-pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_mecanumbot.xml)
-
+#pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_mecanumbot.xml)
+#pluginlib_export_plugin_description_file(hardware_interface cmex_diffbot.xml)
+pluginlib_export_plugin_description_file(hardware_interface ros2_control_cmexa_basebot.xml)
 
 install(
         DIRECTORY include/
