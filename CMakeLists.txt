@@ -15,11 +15,6 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
         rclcpp
         rclcpp_lifecycle
         cmeresearch_msgs
-        nav_msgs
-        geometry_msgs
-        tf2
-        tf2_ros
-        tf2_geometry_msgs
 )
 
 # find dependencies

@@ -33,9 +33,6 @@
 
 #include "cmeresearch_msgs/msg/tinker_stepper_command.hpp"
 #include "cmeresearch_msgs/msg/tinker_stepper_feedback.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2_ros/transform_broadcaster.h"
 #include "rclcpp/rclcpp.hpp"
 
 namespace cmexa_base
@@ -66,9 +63,6 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  void updateOdometry(const rclcpp::Duration & period);
-
-private:
   // Parameters for the DiffBot simulation
   double hw_start_sec_;
   double hw_stop_sec_;
@@ -80,11 +74,6 @@ private:
   double wheel_separation_y_;
   double steps_per_revolution_;
 
-  // Odometry
-  double odometry_x_;
-  double odometry_y_;
-  double odometry_theta_;
-
   rclcpp::Node::SharedPtr node_;
 
   // send commands to the hardware
@@ -92,9 +81,6 @@ private:
   rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_front_right_pub_;
   rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_rear_left_pub_;
   rclcpp::Publisher<cmeresearch_msgs::msg::TinkerStepperCommand>::SharedPtr command_rear_right_pub_;
-
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
-  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
   cmeresearch_msgs::msg::TinkerStepperCommand cmd_message_front_left_;
   cmeresearch_msgs::msg::TinkerStepperCommand cmd_message_rear_left_;

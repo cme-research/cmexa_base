@@ -104,14 +104,6 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
-
-  odometry_x_ = 0.0;
-  odometry_y_ = 0.0;
-  odometry_theta_ = 0.0;
-
-
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
   {
     // DiffBotSystem has exactly two states and one command interface on each joint
@@ -256,120 +248,45 @@ hardware_interface::return_type CmexaBaseBotSystemHardware::read(
   set_state("rear_left_wheel_joint/position", get_state("rear_left_wheel_joint/position") + rl_vel * period.seconds());
   set_state("rear_right_wheel_joint/position", get_state("rear_right_wheel_joint/position") + rr_vel * period.seconds());
 
-  // Calculate and publish odometry
-  updateOdometry(period);
-
   return hardware_interface::return_type::OK;
 }
 
-void CmexaBaseBotSystemHardware::updateOdometry(const rclcpp::Duration & period)
-{
-  double fl_vel = get_state("front_left_wheel_joint/velocity");
-  double fr_vel = get_state("front_right_wheel_joint/velocity");
-  double rl_vel = get_state("rear_left_wheel_joint/velocity");
-  double rr_vel = get_state("rear_right_wheel_joint/velocity");
-
-  // Mecanum kinematics (Assuming standard layout)
-  // vx = (fl + fr + rl + rr) * r / 4
-  // vy = (-fl + fr + rl - rr) * r / 4
-  // wz = (-fl + fr - rl + rr) * r / (4 * (lx + ly))
-  double r = wheel_radius_;
-  double lx = wheel_separation_x_ / 2.0;
-  double ly = wheel_separation_y_ / 2.0;
-
-  double vx = (fl_vel + fr_vel + rl_vel + rr_vel) * r / 4.0;
-  double vy = (-fl_vel + fr_vel + rl_vel - rr_vel) * r / 4.0;
-  double wz = (-fl_vel + fr_vel - rl_vel + rr_vel) * r / (4.0 * (lx + ly));
-
-  // Integrate pose
-  double dt = period.seconds();
-  odometry_x_ += (vx * cos(odometry_theta_) - vy * sin(odometry_theta_)) * dt;
-  odometry_y_ += (vx * sin(odometry_theta_) + vy * cos(odometry_theta_)) * dt;
-  odometry_theta_ += wz * dt;
-
-  // Publish Odometry message
-  auto odom_msg = std::make_unique<nav_msgs::msg::Odometry>();
-  odom_msg->header.stamp = node_->get_clock()->now();
-  odom_msg->header.frame_id = "odom";
-  odom_msg->child_frame_id = "base_link";
-
-  odom_msg->pose.pose.position.x = odometry_x_;
-  odom_msg->pose.pose.position.y = odometry_y_;
-  odom_msg->pose.pose.orientation.z = sin(odometry_theta_ / 2.0);
-  odom_msg->pose.pose.orientation.w = cos(odometry_theta_ / 2.0);
-
-  odom_msg->twist.twist.linear.x = vx;
-  odom_msg->twist.twist.linear.y = vy;
-  odom_msg->twist.twist.angular.z = wz;
-
-  odom_pub_->publish(std::move(odom_msg));
-
-  // Publish TF
-  geometry_msgs::msg::TransformStamped tf_msg;
-  tf_msg.header.stamp = node_->get_clock()->now();
-  tf_msg.header.frame_id = "odom";
-  tf_msg.child_frame_id = "base_link";
-  tf_msg.transform.translation.x = odometry_x_;
-  tf_msg.transform.translation.y = odometry_y_;
-  tf_msg.transform.rotation.z = sin(odometry_theta_ / 2.0);
-  tf_msg.transform.rotation.w = cos(odometry_theta_ / 2.0);
-
-  tf_broadcaster_->sendTransform(tf_msg);
-}
-
-hardware_interface::return_type cmexa_base ::CmexaBaseBotSystemHardware::write(
+hardware_interface::return_type CmexaBaseBotSystemHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-
-  //cmd_message_front_left_.velocity = 123;
-  //command_front_left_pub_->publish(cmd_message_front_left_);
-  // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
-  std::stringstream ss;
-  ss << "Writing commands:";
   for (const auto & [name, descr] : joint_command_interfaces_)
   {
-    // Simulate sending commands to the hardware
-    set_state(name, get_command(name));
+    double command = get_command(name);
+
     if (name == "front_left_wheel_joint/velocity")
     {
       cmd_message_front_left_.header.stamp = node_->get_clock()->now();
       cmd_message_front_left_.header.frame_id = "front_left_wheel_joint";
-
-      cmd_message_front_left_.velocity = double(get_command(name)) * gear_ratio_;
+      cmd_message_front_left_.velocity = command;
       command_front_left_pub_->publish(cmd_message_front_left_);
     }
     else if (name == "rear_right_wheel_joint/velocity")
     {
       cmd_message_rear_right_.header.stamp = node_->get_clock()->now();
       cmd_message_rear_right_.header.frame_id = "rear_right_wheel_joint";
-
-      cmd_message_rear_right_.velocity = double(get_command(name)) * gear_ratio_;
+      cmd_message_rear_right_.velocity = command;
       command_rear_right_pub_->publish(cmd_message_rear_right_);
     }
     else if (name == "front_right_wheel_joint/velocity")
     {
       cmd_message_front_right_.header.stamp = node_->get_clock()->now();
       cmd_message_front_right_.header.frame_id = "front_right_wheel_joint";
-
-      cmd_message_front_right_.velocity = double(get_command(name)) * gear_ratio_;
+      cmd_message_front_right_.velocity = command;
       command_front_right_pub_->publish(cmd_message_front_right_);
     }
     else if (name == "rear_left_wheel_joint/velocity")
     {
       cmd_message_rear_left_.header.stamp = node_->get_clock()->now();
       cmd_message_rear_left_.header.frame_id = "rear_left_wheel_joint";
-
-      cmd_message_rear_left_.velocity = double(get_command(name)) * gear_ratio_;
+      cmd_message_rear_left_.velocity = command;
       command_rear_left_pub_->publish(cmd_message_rear_left_);
     }
-
-
-
-    ss << std::fixed << std::setprecision(2) << std::endl
-       << "\t" << "command " << get_command(name) << " for '" << name << "'!";
   }
-  RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500, "%s", ss.str().c_str());
-  // END: This part here is for exemplary purposes - Please do not copy to your production code
 
   return hardware_interface::return_type::OK;
 }
