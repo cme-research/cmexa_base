@@ -46,29 +46,29 @@ CmexaBaseBotSystemHardware::CmexaBaseBotSystemHardware()
 
 void CmexaBaseBotSystemHardware::feedbackFrontLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-    //RCLCPP_INFO(node_->get_logger(), "FeedbackFrontLeftCallback received: %f", msg->current_velocity);
+  feedback_front_left_msg_ = *msg;
 }
 
 void CmexaBaseBotSystemHardware::feedbackFrontRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  //RCLCPP_INFO(node_->get_logger(), "FeedbackFrontRightCallback received: %f", msg->current_velocity);
+  feedback_front_right_msg_ = *msg;
 }
 
 void CmexaBaseBotSystemHardware::feedbackRearLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  //RCLCPP_INFO(node_->get_logger(), "FeedbackRearLeftCallback received: %f", msg->current_velocity);
+  feedback_rear_left_msg_ = *msg;
 }
 
 void CmexaBaseBotSystemHardware::feedbackRearRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-   //RCLCPP_INFO(node_->get_logger(), "FeedbackRearRightCallback received: %f", msg->current_velocity);
+  feedback_rear_right_msg_ = *msg;
 }
 
 hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
-  const hardware_interface::HardwareInfo & info)
+  const hardware_interface::HardwareComponentInterfaceParams & params)
 {
   if (
-    hardware_interface::SystemInterface::on_init(info) !=
+    hardware_interface::SystemInterface::on_init(params) !=
     hardware_interface::CallbackReturn::SUCCESS)
   {
     return hardware_interface::CallbackReturn::ERROR;
@@ -82,6 +82,17 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
   // END: This part here is for exemplary purposes - Please do not copy to your production code
 
   gear_ratio_ = hardware_interface::stod(info_.hardware_parameters["gear_ratio"]);
+  wheel_radius_ = hardware_interface::stod(info_.hardware_parameters["wheel_radius"]);
+  wheel_separation_x_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_x"]);
+  wheel_separation_y_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_y"]);
+  steps_per_revolution_ = hardware_interface::stod(info_.hardware_parameters["steps_per_revolution"]);
+
+  odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
+
+  odometry_x_ = 0.0;
+  odometry_y_ = 0.0;
+  odometry_theta_ = 0.0;
 
 
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
@@ -206,32 +217,87 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_deactivate(
 hardware_interface::return_type CmexaBaseBotSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-    // Read state from hardware
-    // TODO: add calculation for odometry??
+  // Update joint states from feedback
+  // Note: TinkerStepperFeedback.current_velocity is in steps/s
+  // We convert it to rad/s for joint states
+  double rad_per_step = (2.0 * M_PI) / (steps_per_revolution_ * gear_ratio_);
 
-  // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
-  std::stringstream ss;
-  ss << "Reading states:";
-  ss << std::fixed << std::setprecision(2);
-  for (const auto & [name, descr] : joint_state_interfaces_)
-  {
-    if (descr.get_interface_name() == hardware_interface::HW_IF_POSITION)
-    {
-      // Simulate DiffBot wheels's movement as a first-order system
-      // Update the joint status: this is a revolute joint without any limit.
-      // Simply integrates
-      auto velo = get_command(descr.get_prefix_name() + "/" + hardware_interface::HW_IF_VELOCITY);
-      set_state(name, get_state(name) + period.seconds() * velo);
+  double fl_vel = feedback_front_left_msg_.current_velocity * rad_per_step;
+  double fr_vel = feedback_front_right_msg_.current_velocity * rad_per_step;
+  double rl_vel = feedback_rear_left_msg_.current_velocity * rad_per_step;
+  double rr_vel = feedback_rear_right_msg_.current_velocity * rad_per_step;
 
-      ss << std::endl
-         << "\t position " << get_state(name) << " and velocity " << velo << " for '" << name
-         << "'!";
-    }
-  }
-  //RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500, "%s", ss.str().c_str());
-  // END: This part here is for exemplary purposes - Please do not copy to your production code
+  // Update hardware interface states
+  set_state("front_left_wheel_joint/velocity", fl_vel);
+  set_state("front_right_wheel_joint/velocity", fr_vel);
+  set_state("rear_left_wheel_joint/velocity", rl_vel);
+  set_state("rear_right_wheel_joint/velocity", rr_vel);
+
+  // Integrate position
+  set_state("front_left_wheel_joint/position", get_state("front_left_wheel_joint/position") + fl_vel * period.seconds());
+  set_state("front_right_wheel_joint/position", get_state("front_right_wheel_joint/position") + fr_vel * period.seconds());
+  set_state("rear_left_wheel_joint/position", get_state("rear_left_wheel_joint/position") + rl_vel * period.seconds());
+  set_state("rear_right_wheel_joint/position", get_state("rear_right_wheel_joint/position") + rr_vel * period.seconds());
+
+  // Calculate and publish odometry
+  updateOdometry(period);
 
   return hardware_interface::return_type::OK;
+}
+
+void CmexaBaseBotSystemHardware::updateOdometry(const rclcpp::Duration & period)
+{
+  double fl_vel = get_state("front_left_wheel_joint/velocity");
+  double fr_vel = get_state("front_right_wheel_joint/velocity");
+  double rl_vel = get_state("rear_left_wheel_joint/velocity");
+  double rr_vel = get_state("rear_right_wheel_joint/velocity");
+
+  // Mecanum kinematics (Assuming standard layout)
+  // vx = (fl + fr + rl + rr) * r / 4
+  // vy = (-fl + fr + rl - rr) * r / 4
+  // wz = (-fl + fr - rl + rr) * r / (4 * (lx + ly))
+  double r = wheel_radius_;
+  double lx = wheel_separation_x_ / 2.0;
+  double ly = wheel_separation_y_ / 2.0;
+
+  double vx = (fl_vel + fr_vel + rl_vel + rr_vel) * r / 4.0;
+  double vy = (-fl_vel + fr_vel + rl_vel - rr_vel) * r / 4.0;
+  double wz = (-fl_vel + fr_vel - rl_vel + rr_vel) * r / (4.0 * (lx + ly));
+
+  // Integrate pose
+  double dt = period.seconds();
+  odometry_x_ += (vx * cos(odometry_theta_) - vy * sin(odometry_theta_)) * dt;
+  odometry_y_ += (vx * sin(odometry_theta_) + vy * cos(odometry_theta_)) * dt;
+  odometry_theta_ += wz * dt;
+
+  // Publish Odometry message
+  auto odom_msg = std::make_unique<nav_msgs::msg::Odometry>();
+  odom_msg->header.stamp = node_->get_clock()->now();
+  odom_msg->header.frame_id = "odom";
+  odom_msg->child_frame_id = "base_link";
+
+  odom_msg->pose.pose.position.x = odometry_x_;
+  odom_msg->pose.pose.position.y = odometry_y_;
+  odom_msg->pose.pose.orientation.z = sin(odometry_theta_ / 2.0);
+  odom_msg->pose.pose.orientation.w = cos(odometry_theta_ / 2.0);
+
+  odom_msg->twist.twist.linear.x = vx;
+  odom_msg->twist.twist.linear.y = vy;
+  odom_msg->twist.twist.angular.z = wz;
+
+  odom_pub_->publish(std::move(odom_msg));
+
+  // Publish TF
+  geometry_msgs::msg::TransformStamped tf_msg;
+  tf_msg.header.stamp = node_->get_clock()->now();
+  tf_msg.header.frame_id = "odom";
+  tf_msg.child_frame_id = "base_link";
+  tf_msg.transform.translation.x = odometry_x_;
+  tf_msg.transform.translation.y = odometry_y_;
+  tf_msg.transform.rotation.z = sin(odometry_theta_ / 2.0);
+  tf_msg.transform.rotation.w = cos(odometry_theta_ / 2.0);
+
+  tf_broadcaster_->sendTransform(tf_msg);
 }
 
 hardware_interface::return_type cmexa_base ::CmexaBaseBotSystemHardware::write(
