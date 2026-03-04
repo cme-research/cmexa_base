@@ -74,6 +74,18 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
+  if (info_.hardware_parameters.find("example_param_hw_start_duration_sec") == info_.hardware_parameters.end() ||
+      info_.hardware_parameters.find("example_param_hw_stop_duration_sec") == info_.hardware_parameters.end() ||
+      info_.hardware_parameters.find("gear_ratio") == info_.hardware_parameters.end() ||
+      info_.hardware_parameters.find("wheel_radius") == info_.hardware_parameters.end() ||
+      info_.hardware_parameters.find("wheel_separation_x") == info_.hardware_parameters.end() ||
+      info_.hardware_parameters.find("wheel_separation_y") == info_.hardware_parameters.end() ||
+      info_.hardware_parameters.find("steps_per_revolution") == info_.hardware_parameters.end())
+  {
+    RCLCPP_FATAL(get_logger(), "Missing hardware parameter(s)!");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
   // BEGIN: This part here is for exemplary purposes - Please do not copy to your production code
   hw_start_sec_ =
     hardware_interface::stod(info_.hardware_parameters["example_param_hw_start_duration_sec"]);
@@ -86,6 +98,11 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
   wheel_separation_x_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_x"]);
   wheel_separation_y_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_y"]);
   steps_per_revolution_ = hardware_interface::stod(info_.hardware_parameters["steps_per_revolution"]);
+
+  if (!node_) {
+    RCLCPP_FATAL(get_logger(), "Node not initialized!");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
 
   odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("~/odom", 10);
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(node_);
