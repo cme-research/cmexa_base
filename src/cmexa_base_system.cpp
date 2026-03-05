@@ -29,39 +29,43 @@
 
 namespace cmexa_base
 {
+namespace
+{
+std::string get_hardware_param_or_default(
+  const hardware_interface::HardwareInfo & info, const std::string & key,
+  const std::string & default_value)
+{
+  const auto it = info.hardware_parameters.find(key);
+  return (it != info.hardware_parameters.end()) ? it->second : default_value;
+}
+}  // namespace
 
 CmexaBaseBotSystemHardware::CmexaBaseBotSystemHardware()
 {
-  node_ = std::make_shared<rclcpp::Node>("cmexa_base");
-  command_front_left_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>("~/front_left/cmd_vel", 10);
-  command_front_right_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>("~/front_right/cmd_vel", 10);
-  command_rear_left_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>("~/rear_left/cmd_vel", 10);
-  command_rear_right_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>("~/rear_right/cmd_vel", 10);
-
-  feedback_front_left_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/front_left/feedback", 10, std::bind(&CmexaBaseBotSystemHardware::feedbackFrontLeftCallback, this, std::placeholders::_1));
-  feedback_front_right_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/front_right/feedback", 10, std::bind(&CmexaBaseBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
-  feedback_rear_left_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/rear_left/feedback", 10, std::bind(&CmexaBaseBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
-  feedback_rear_right_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>("~/rear_right/feedback", 10, std::bind(&CmexaBaseBotSystemHardware::feedbackRearRightCallback, this, std::placeholders::_1));
 }
 
 void CmexaBaseBotSystemHardware::feedbackFrontLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  feedback_front_left_msg_ = *msg;
+  std::lock_guard<std::mutex> lock(feedback_mutex_);
+  front_left_feedback_velocity_steps_s_ = msg->current_velocity;
 }
 
 void CmexaBaseBotSystemHardware::feedbackFrontRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  feedback_front_right_msg_ = *msg;
+  std::lock_guard<std::mutex> lock(feedback_mutex_);
+  front_right_feedback_velocity_steps_s_ = msg->current_velocity;
 }
 
 void CmexaBaseBotSystemHardware::feedbackRearLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  feedback_rear_left_msg_ = *msg;
+  std::lock_guard<std::mutex> lock(feedback_mutex_);
+  rear_left_feedback_velocity_steps_s_ = msg->current_velocity;
 }
 
 void CmexaBaseBotSystemHardware::feedbackRearRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg)
 {
-  feedback_rear_right_msg_ = *msg;
+  std::lock_guard<std::mutex> lock(feedback_mutex_);
+  rear_right_feedback_velocity_steps_s_ = msg->current_velocity;
 }
 
 hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
@@ -99,10 +103,47 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
   wheel_separation_y_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_y"]);
   steps_per_revolution_ = hardware_interface::stod(info_.hardware_parameters["steps_per_revolution"]);
 
+  node_ = get_node();
   if (!node_) {
-    RCLCPP_FATAL(get_logger(), "Node not initialized!");
+    RCLCPP_FATAL(get_logger(), "Hardware interface node not available.");
     return hardware_interface::CallbackReturn::ERROR;
   }
+
+  front_left_wheel_.joint_name =
+    get_hardware_param_or_default(info_, "front_left_joint", "front_left_wheel_joint");
+  front_right_wheel_.joint_name =
+    get_hardware_param_or_default(info_, "front_right_joint", "front_right_wheel_joint");
+  rear_left_wheel_.joint_name =
+    get_hardware_param_or_default(info_, "rear_left_joint", "rear_left_wheel_joint");
+  rear_right_wheel_.joint_name =
+    get_hardware_param_or_default(info_, "rear_right_joint", "rear_right_wheel_joint");
+
+  front_left_wheel_.cmd_topic =
+    get_hardware_param_or_default(info_, "front_left_cmd_topic", "~/front_left/cmd_vel");
+  front_right_wheel_.cmd_topic =
+    get_hardware_param_or_default(info_, "front_right_cmd_topic", "~/front_right/cmd_vel");
+  rear_left_wheel_.cmd_topic =
+    get_hardware_param_or_default(info_, "rear_left_cmd_topic", "~/rear_left/cmd_vel");
+  rear_right_wheel_.cmd_topic =
+    get_hardware_param_or_default(info_, "rear_right_cmd_topic", "~/rear_right/cmd_vel");
+
+  front_left_wheel_.feedback_topic =
+    get_hardware_param_or_default(info_, "front_left_feedback_topic", "~/front_left/feedback");
+  front_right_wheel_.feedback_topic =
+    get_hardware_param_or_default(info_, "front_right_feedback_topic", "~/front_right/feedback");
+  rear_left_wheel_.feedback_topic =
+    get_hardware_param_or_default(info_, "rear_left_feedback_topic", "~/rear_left/feedback");
+  rear_right_wheel_.feedback_topic =
+    get_hardware_param_or_default(info_, "rear_right_feedback_topic", "~/rear_right/feedback");
+
+  front_left_wheel_.frame_id =
+    get_hardware_param_or_default(info_, "front_left_frame_id", front_left_wheel_.joint_name);
+  front_right_wheel_.frame_id =
+    get_hardware_param_or_default(info_, "front_right_frame_id", front_right_wheel_.joint_name);
+  rear_left_wheel_.frame_id =
+    get_hardware_param_or_default(info_, "rear_left_frame_id", rear_left_wheel_.joint_name);
+  rear_right_wheel_.frame_id =
+    get_hardware_param_or_default(info_, "rear_right_frame_id", rear_right_wheel_.joint_name);
 
   for (const hardware_interface::ComponentInfo & joint : info_.joints)
   {
@@ -150,6 +191,50 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
       return hardware_interface::CallbackReturn::ERROR;
     }
   }
+
+  const auto has_velocity_and_position = [this](const std::string & joint_name) {
+      const std::string velocity = joint_name + "/" + hardware_interface::HW_IF_VELOCITY;
+      const std::string position = joint_name + "/" + hardware_interface::HW_IF_POSITION;
+      return joint_state_interfaces_.find(velocity) != joint_state_interfaces_.end() &&
+             joint_state_interfaces_.find(position) != joint_state_interfaces_.end() &&
+             joint_command_interfaces_.find(velocity) != joint_command_interfaces_.end();
+    };
+
+  if (!has_velocity_and_position(front_left_wheel_.joint_name) ||
+      !has_velocity_and_position(front_right_wheel_.joint_name) ||
+      !has_velocity_and_position(rear_left_wheel_.joint_name) ||
+      !has_velocity_and_position(rear_right_wheel_.joint_name))
+  {
+    RCLCPP_FATAL(
+      get_logger(),
+      "Wheel joint mapping is invalid. Verify *_joint hardware parameters and joint interfaces.");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  command_front_left_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>(
+    front_left_wheel_.cmd_topic, rclcpp::QoS(10));
+  command_front_right_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>(
+    front_right_wheel_.cmd_topic, rclcpp::QoS(10));
+  command_rear_left_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>(
+    rear_left_wheel_.cmd_topic, rclcpp::QoS(10));
+  command_rear_right_pub_ = node_->create_publisher<cmeresearch_msgs::msg::TinkerStepperCommand>(
+    rear_right_wheel_.cmd_topic, rclcpp::QoS(10));
+
+  feedback_front_left_sub_ =
+    node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>(
+    front_left_wheel_.feedback_topic, rclcpp::QoS(10),
+    std::bind(&CmexaBaseBotSystemHardware::feedbackFrontLeftCallback, this, std::placeholders::_1));
+  feedback_front_right_sub_ =
+    node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>(
+    front_right_wheel_.feedback_topic, rclcpp::QoS(10),
+    std::bind(&CmexaBaseBotSystemHardware::feedbackFrontRightCallback, this, std::placeholders::_1));
+  feedback_rear_left_sub_ = node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>(
+    rear_left_wheel_.feedback_topic, rclcpp::QoS(10),
+    std::bind(&CmexaBaseBotSystemHardware::feedbackRearLeftCallback, this, std::placeholders::_1));
+  feedback_rear_right_sub_ =
+    node_->create_subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>(
+    rear_right_wheel_.feedback_topic, rclcpp::QoS(10),
+    std::bind(&CmexaBaseBotSystemHardware::feedbackRearRightCallback, this, std::placeholders::_1));
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -231,22 +316,42 @@ hardware_interface::return_type CmexaBaseBotSystemHardware::read(
   // We convert it to rad/s for joint states
   double rad_per_step = (2.0 * M_PI) / (steps_per_revolution_ * gear_ratio_);
 
-  double fl_vel = feedback_front_left_msg_.current_velocity * rad_per_step;
-  double fr_vel = feedback_front_right_msg_.current_velocity * rad_per_step;
-  double rl_vel = feedback_rear_left_msg_.current_velocity * rad_per_step;
-  double rr_vel = feedback_rear_right_msg_.current_velocity * rad_per_step;
+  double fl_steps = 0.0;
+  double fr_steps = 0.0;
+  double rl_steps = 0.0;
+  double rr_steps = 0.0;
+  {
+    std::lock_guard<std::mutex> lock(feedback_mutex_);
+    fl_steps = front_left_feedback_velocity_steps_s_;
+    fr_steps = front_right_feedback_velocity_steps_s_;
+    rl_steps = rear_left_feedback_velocity_steps_s_;
+    rr_steps = rear_right_feedback_velocity_steps_s_;
+  }
+
+  double fl_vel = fl_steps * rad_per_step;
+  double fr_vel = fr_steps * rad_per_step;
+  double rl_vel = rl_steps * rad_per_step;
+  double rr_vel = rr_steps * rad_per_step;
 
   // Update hardware interface states
-  set_state("front_left_wheel_joint/velocity", fl_vel);
-  set_state("front_right_wheel_joint/velocity", fr_vel);
-  set_state("rear_left_wheel_joint/velocity", rl_vel);
-  set_state("rear_right_wheel_joint/velocity", rr_vel);
+  set_state(front_left_wheel_.joint_name + "/velocity", fl_vel);
+  set_state(front_right_wheel_.joint_name + "/velocity", fr_vel);
+  set_state(rear_left_wheel_.joint_name + "/velocity", rl_vel);
+  set_state(rear_right_wheel_.joint_name + "/velocity", rr_vel);
 
   // Integrate position
-  set_state("front_left_wheel_joint/position", get_state("front_left_wheel_joint/position") + fl_vel * period.seconds());
-  set_state("front_right_wheel_joint/position", get_state("front_right_wheel_joint/position") + fr_vel * period.seconds());
-  set_state("rear_left_wheel_joint/position", get_state("rear_left_wheel_joint/position") + rl_vel * period.seconds());
-  set_state("rear_right_wheel_joint/position", get_state("rear_right_wheel_joint/position") + rr_vel * period.seconds());
+  set_state(
+    front_left_wheel_.joint_name + "/position",
+    get_state(front_left_wheel_.joint_name + "/position") + fl_vel * period.seconds());
+  set_state(
+    front_right_wheel_.joint_name + "/position",
+    get_state(front_right_wheel_.joint_name + "/position") + fr_vel * period.seconds());
+  set_state(
+    rear_left_wheel_.joint_name + "/position",
+    get_state(rear_left_wheel_.joint_name + "/position") + rl_vel * period.seconds());
+  set_state(
+    rear_right_wheel_.joint_name + "/position",
+    get_state(rear_right_wheel_.joint_name + "/position") + rr_vel * period.seconds());
 
   return hardware_interface::return_type::OK;
 }
@@ -258,31 +363,31 @@ hardware_interface::return_type CmexaBaseBotSystemHardware::write(
   {
     double command = get_command(name);
 
-    if (name == "front_left_wheel_joint/velocity")
+    if (name == front_left_wheel_.joint_name + "/velocity")
     {
       cmd_message_front_left_.header.stamp = node_->get_clock()->now();
-      cmd_message_front_left_.header.frame_id = "front_left_wheel_joint";
+      cmd_message_front_left_.header.frame_id = front_left_wheel_.frame_id;
       cmd_message_front_left_.velocity = command;
       command_front_left_pub_->publish(cmd_message_front_left_);
     }
-    else if (name == "rear_right_wheel_joint/velocity")
+    else if (name == rear_right_wheel_.joint_name + "/velocity")
     {
       cmd_message_rear_right_.header.stamp = node_->get_clock()->now();
-      cmd_message_rear_right_.header.frame_id = "rear_right_wheel_joint";
+      cmd_message_rear_right_.header.frame_id = rear_right_wheel_.frame_id;
       cmd_message_rear_right_.velocity = command;
       command_rear_right_pub_->publish(cmd_message_rear_right_);
     }
-    else if (name == "front_right_wheel_joint/velocity")
+    else if (name == front_right_wheel_.joint_name + "/velocity")
     {
       cmd_message_front_right_.header.stamp = node_->get_clock()->now();
-      cmd_message_front_right_.header.frame_id = "front_right_wheel_joint";
+      cmd_message_front_right_.header.frame_id = front_right_wheel_.frame_id;
       cmd_message_front_right_.velocity = command;
       command_front_right_pub_->publish(cmd_message_front_right_);
     }
-    else if (name == "rear_left_wheel_joint/velocity")
+    else if (name == rear_left_wheel_.joint_name + "/velocity")
     {
       cmd_message_rear_left_.header.stamp = node_->get_clock()->now();
-      cmd_message_rear_left_.header.frame_id = "rear_left_wheel_joint";
+      cmd_message_rear_left_.header.frame_id = rear_left_wheel_.frame_id;
       cmd_message_rear_left_.velocity = command;
       command_rear_left_pub_->publish(cmd_message_rear_left_);
     }

@@ -16,6 +16,7 @@
 #define CMEXA_BASE__SYSTEM_HPP_
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -63,6 +64,14 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
+  struct WheelEndpoints
+  {
+    std::string joint_name;
+    std::string cmd_topic;
+    std::string feedback_topic;
+    std::string frame_id;
+  };
+
   // Parameters for the DiffBot simulation
   double hw_start_sec_;
   double hw_stop_sec_;
@@ -92,11 +101,16 @@ private:
   rclcpp::Subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>::SharedPtr feedback_rear_left_sub_;
   rclcpp::Subscription<cmeresearch_msgs::msg::TinkerStepperFeedback>::SharedPtr feedback_rear_right_sub_;
 
-	//TODO: std::shared_ptr<unico_msgs::msg::TinkerStepperFeedback> feedback_front_left_msg_;
-  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_front_left_msg_;
-  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_front_right_msg_;
-  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_rear_left_msg_;
-  cmeresearch_msgs::msg::TinkerStepperFeedback feedback_rear_right_msg_;
+  std::mutex feedback_mutex_;
+  double front_left_feedback_velocity_steps_s_{0.0};
+  double front_right_feedback_velocity_steps_s_{0.0};
+  double rear_left_feedback_velocity_steps_s_{0.0};
+  double rear_right_feedback_velocity_steps_s_{0.0};
+
+  WheelEndpoints front_left_wheel_;
+  WheelEndpoints front_right_wheel_;
+  WheelEndpoints rear_left_wheel_;
+  WheelEndpoints rear_right_wheel_;
 
   void feedbackFrontLeftCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg);
   void feedbackFrontRightCallback(const cmeresearch_msgs::msg::TinkerStepperFeedback::SharedPtr msg);
