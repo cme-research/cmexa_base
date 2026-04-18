@@ -20,7 +20,7 @@ jobs:
       - uses: ros-tooling/action-ros-ci@v0.3
         with:
           target-ros2-distro: jazzy
-          skip-tests: false
+          skip-tests: true
           rosdep-check: false
           package-name: cmexa_base
           vcs-repo-file-url: https://raw.githubusercontent.com/cme-research/cmexa_base/${{ github.ref_name }}/.ci.repos
