@@ -23,4 +23,4 @@ jobs:
           skip-tests: true
           rosdep-check: false
           package-name: cmexa_base
-          vcs-repo-file-url: https://raw.githubusercontent.com/cme-research/cmexa_base/${{ github.ref_name }}/.ci.repos
+          vcs-repo-file-url: https://raw.githubusercontent.com/cme-research/cmexa_base/${{ github.head_ref || github.ref_name }}/.ci.repos
