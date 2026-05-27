@@ -102,6 +102,11 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
   wheel_separation_x_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_x"]);
   wheel_separation_y_ = hardware_interface::stod(info_.hardware_parameters["wheel_separation_y"]);
   steps_per_revolution_ = hardware_interface::stod(info_.hardware_parameters["steps_per_revolution"]);
+  // Bricklet microstep mode (1, 2, 4, 8, 16, 32, 64, 128 or 256). Falls back to 8
+  // when the URDF predates the parameter — matches the SILENT_STEPPER_V2_STEP_RESOLUTION_8
+  // hardcoded in cmeresearch_stepper_driver.
+  step_resolution_ = hardware_interface::stod(
+    get_hardware_param_or_default(info_, "step_resolution", "8"));
 
   node_ = get_node();
   if (!node_) {
@@ -311,10 +316,10 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_deactivate(
 hardware_interface::return_type CmexaBaseBotSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
 {
-  // Update joint states from feedback
-  // Note: TinkerStepperFeedback.current_velocity is in steps/s
-  // We convert it to rad/s for joint states
-  double rad_per_step = (2.0 * M_PI) / (steps_per_revolution_ * gear_ratio_);
+  // TinkerStepperFeedback.current_velocity is microsteps/s on the motor shaft.
+  // wheel_rad/s = microsteps/s × 2π / (steps_per_rev × step_resolution × gear_ratio)
+  const double rad_per_microstep =
+    (2.0 * M_PI) / (steps_per_revolution_ * step_resolution_ * gear_ratio_);
 
   double fl_steps = 0.0;
   double fr_steps = 0.0;
@@ -328,10 +333,10 @@ hardware_interface::return_type CmexaBaseBotSystemHardware::read(
     rr_steps = rear_right_feedback_velocity_steps_s_;
   }
 
-  double fl_vel = fl_steps * rad_per_step;
-  double fr_vel = fr_steps * rad_per_step;
-  double rl_vel = rl_steps * rad_per_step;
-  double rr_vel = rr_steps * rad_per_step;
+  double fl_vel = fl_steps * rad_per_microstep;
+  double fr_vel = fr_steps * rad_per_microstep;
+  double rl_vel = rl_steps * rad_per_microstep;
+  double rr_vel = rr_steps * rad_per_microstep;
 
   // Update hardware interface states
   set_state(front_left_wheel_.joint_name + "/velocity", fl_vel);

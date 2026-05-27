@@ -82,6 +82,7 @@ private:
   double wheel_separation_x_;
   double wheel_separation_y_;
   double steps_per_revolution_;
+  double step_resolution_;
 
   rclcpp::Node::SharedPtr node_;
 
