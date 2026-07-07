@@ -84,6 +84,13 @@ private:
   double steps_per_revolution_;
   double step_resolution_;
 
+  // Per-wheel velocity ceiling (wheel rad/s) mirroring the stepper driver's
+  // max_step_vel clamp. Used to proportionally normalize the four wheel
+  // commands so combined mecanum motion never demands more than the hardware
+  // can deliver, while preserving the commanded direction. 0.0 = disabled
+  // (URDF omitted max_step_vel — fall back to the driver-side clamp only).
+  double max_wheel_velocity_rad_s_{0.0};
+
   rclcpp::Node::SharedPtr node_;
 
   // send commands to the hardware
