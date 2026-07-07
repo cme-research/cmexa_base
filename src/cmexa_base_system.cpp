@@ -14,6 +14,7 @@
 
 #include "cmexa_base/cmexa_base_system.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -107,6 +108,37 @@ hardware_interface::CallbackReturn CmexaBaseBotSystemHardware::on_init(
   // hardcoded in cmeresearch_stepper_driver.
   step_resolution_ = hardware_interface::stod(
     get_hardware_param_or_default(info_, "step_resolution", "8"));
+
+  // Optional per-wheel velocity ceiling. When the URDF passes max_step_vel
+  // (microsteps/s on the motor shaft — the same value handed to
+  // cmeresearch_stepper_driver), derive the equivalent wheel angular velocity
+  // and enable proportional normalization in write(). Mirrors the driver-side
+  // clamp: wheel_rad/s = microsteps/s * 2*pi / (steps_per_rev * step_res * gear).
+  // Omitting the parameter leaves normalization disabled (0.0) and preserves
+  // the previous behaviour of relying solely on the bricklet clamp.
+  const std::string max_step_vel_str =
+    get_hardware_param_or_default(info_, "max_step_vel", "");
+  if (!max_step_vel_str.empty()) {
+    const double max_step_vel = hardware_interface::stod(max_step_vel_str);
+    const double denom = steps_per_revolution_ * step_resolution_ * gear_ratio_;
+    if (max_step_vel > 0.0 && denom > 0.0) {
+      max_wheel_velocity_rad_s_ = max_step_vel * (2.0 * M_PI) / denom;
+      RCLCPP_INFO(
+        get_logger(),
+        "Wheel-velocity normalization enabled: max_step_vel=%.0f -> %.3f wheel rad/s",
+        max_step_vel, max_wheel_velocity_rad_s_);
+    } else {
+      RCLCPP_WARN(
+        get_logger(),
+        "max_step_vel='%s' with denom=%.3f is invalid; normalization disabled.",
+        max_step_vel_str.c_str(), denom);
+    }
+  } else {
+    RCLCPP_INFO(
+      get_logger(),
+      "max_step_vel not set; per-wheel velocity normalization disabled "
+      "(relying on the stepper driver clamp only).");
+  }
 
   node_ = get_node();
   if (!node_) {
@@ -364,39 +396,54 @@ hardware_interface::return_type CmexaBaseBotSystemHardware::read(
 hardware_interface::return_type CmexaBaseBotSystemHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  for (const auto & [name, descr] : joint_command_interfaces_)
-  {
-    double command = get_command(name);
+  // Read all four wheel velocity commands (wheel rad/s) up front so they can be
+  // normalized as a set. On a mecanum base each wheel demand is a signed sum of
+  // vx, vy and wz*L, so a diagonal or translation+rotation command drives two
+  // wheels far above the per-axis twist limit. Clamping wheels independently
+  // (as the downstream bricklet does) would saturate those two while leaving
+  // the others untouched, distorting the commanded motion direction. Instead we
+  // scale all four by a single factor so the fastest wheel just meets the
+  // ceiling and the motion vector is preserved.
+  double fl = get_command(front_left_wheel_.joint_name + "/velocity");
+  double fr = get_command(front_right_wheel_.joint_name + "/velocity");
+  double rl = get_command(rear_left_wheel_.joint_name + "/velocity");
+  double rr = get_command(rear_right_wheel_.joint_name + "/velocity");
 
-    if (name == front_left_wheel_.joint_name + "/velocity")
+  if (max_wheel_velocity_rad_s_ > 0.0)
+  {
+    const double max_mag = std::max(
+      {std::abs(fl), std::abs(fr), std::abs(rl), std::abs(rr)});
+    if (max_mag > max_wheel_velocity_rad_s_)
     {
-      cmd_message_front_left_.header.stamp = node_->get_clock()->now();
-      cmd_message_front_left_.header.frame_id = front_left_wheel_.frame_id;
-      cmd_message_front_left_.velocity = command;
-      command_front_left_pub_->publish(cmd_message_front_left_);
-    }
-    else if (name == rear_right_wheel_.joint_name + "/velocity")
-    {
-      cmd_message_rear_right_.header.stamp = node_->get_clock()->now();
-      cmd_message_rear_right_.header.frame_id = rear_right_wheel_.frame_id;
-      cmd_message_rear_right_.velocity = command;
-      command_rear_right_pub_->publish(cmd_message_rear_right_);
-    }
-    else if (name == front_right_wheel_.joint_name + "/velocity")
-    {
-      cmd_message_front_right_.header.stamp = node_->get_clock()->now();
-      cmd_message_front_right_.header.frame_id = front_right_wheel_.frame_id;
-      cmd_message_front_right_.velocity = command;
-      command_front_right_pub_->publish(cmd_message_front_right_);
-    }
-    else if (name == rear_left_wheel_.joint_name + "/velocity")
-    {
-      cmd_message_rear_left_.header.stamp = node_->get_clock()->now();
-      cmd_message_rear_left_.header.frame_id = rear_left_wheel_.frame_id;
-      cmd_message_rear_left_.velocity = command;
-      command_rear_left_pub_->publish(cmd_message_rear_left_);
+      const double scale = max_wheel_velocity_rad_s_ / max_mag;
+      fl *= scale;
+      fr *= scale;
+      rl *= scale;
+      rr *= scale;
     }
   }
+
+  const auto now = node_->get_clock()->now();
+
+  cmd_message_front_left_.header.stamp = now;
+  cmd_message_front_left_.header.frame_id = front_left_wheel_.frame_id;
+  cmd_message_front_left_.velocity = fl;
+  command_front_left_pub_->publish(cmd_message_front_left_);
+
+  cmd_message_front_right_.header.stamp = now;
+  cmd_message_front_right_.header.frame_id = front_right_wheel_.frame_id;
+  cmd_message_front_right_.velocity = fr;
+  command_front_right_pub_->publish(cmd_message_front_right_);
+
+  cmd_message_rear_left_.header.stamp = now;
+  cmd_message_rear_left_.header.frame_id = rear_left_wheel_.frame_id;
+  cmd_message_rear_left_.velocity = rl;
+  command_rear_left_pub_->publish(cmd_message_rear_left_);
+
+  cmd_message_rear_right_.header.stamp = now;
+  cmd_message_rear_right_.header.frame_id = rear_right_wheel_.frame_id;
+  cmd_message_rear_right_.velocity = rr;
+  command_rear_right_pub_->publish(cmd_message_rear_right_);
 
   return hardware_interface::return_type::OK;
 }
