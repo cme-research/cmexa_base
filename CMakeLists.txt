@@ -90,6 +90,15 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  # Loads the installed plugin through ros2_control's ResourceManager and checks
+  # the joint-interface <-> stepper-topic conversions.
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_cmexa_base_system test/test_cmexa_base_system.cpp TIMEOUT 120)
+  target_link_libraries(test_cmexa_base_system
+    ${cmeresearch_msgs_TARGETS}
+    hardware_interface::hardware_interface
+    rclcpp::rclcpp)
 endif()
 
 ament_export_targets(export_cmexa_base HAS_LIBRARY_TARGET)
